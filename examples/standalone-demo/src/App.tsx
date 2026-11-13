@@ -84,8 +84,23 @@ function InlineInputBox({ input, onSubmit, onCancel }: InlineInputBoxProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    textareaRef.current?.focus();
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      const len = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(len, len);
+    }
   }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const nextVal = e.target.value;
+    const nextCursor = e.target.selectionStart;
+    setText(nextVal);
+    requestAnimationFrame(() => {
+      if (textareaRef.current && nextCursor !== null) {
+        textareaRef.current.setSelectionRange(nextCursor, nextCursor);
+      }
+    });
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -109,10 +124,12 @@ function InlineInputBox({ input, onSubmit, onCancel }: InlineInputBoxProps) {
       <textarea
         ref={textareaRef}
         rows={2}
+        dir="ltr"
         value={text}
         placeholder="Ask a clarifying question at this exact sentence... (Enter to post)"
-        onChange={(e) => setText(e.target.value)}
+        onChange={handleChange}
         onKeyDown={handleKeyDown}
+        style={{ direction: 'ltr', textAlign: 'left', unicodeBidi: 'plaintext' }}
       />
       <div className="button-group">
         <button
