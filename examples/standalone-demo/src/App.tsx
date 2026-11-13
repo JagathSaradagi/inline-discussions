@@ -73,6 +73,71 @@ Exceptions apply if the customer utilizes proprietary customer datasets that vio
   },
 ];
 
+interface InlineInputBoxProps {
+  input: ActiveInlineInput;
+  onSubmit: (text: string) => void;
+  onCancel: () => void;
+}
+
+function InlineInputBox({ input, onSubmit, onCancel }: InlineInputBoxProps) {
+  const [text, setText] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (text.trim()) {
+        onSubmit(text.trim());
+      }
+    }
+  };
+
+  return (
+    <div
+      className="input-box"
+      data-testid="inline-input-box"
+      onClick={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+    >
+      <div style={{ fontSize: '12px', color: '#38bdf8', marginBottom: '6px', fontWeight: 600 }}>
+        In-Situ Question: &ldquo;{input.text}&rdquo;
+      </div>
+      <textarea
+        ref={textareaRef}
+        rows={2}
+        value={text}
+        placeholder="Ask a clarifying question at this exact sentence... (Enter to post)"
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+      <div className="button-group">
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => {
+            if (text.trim()) {
+              onSubmit(text.trim());
+            }
+          }}
+        >
+          Post Inline Doubt
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function App() {
   const [selectedScenarioId, setSelectedScenarioId] = useState('systems');
   const [scenarioMessages, setScenarioMessages] = useState<Record<string, InlineThreadMessage[]>>({
@@ -83,7 +148,6 @@ export function App() {
 
   const activeMessages = scenarioMessages[selectedScenarioId] || [];
   const [activeInput, setActiveInput] = useState<ActiveInlineInput | null>(null);
-  const [draftText, setDraftText] = useState('');
   const { expandedThreads, toggleThread, expandThread } = useThreadExpansion();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -103,26 +167,25 @@ export function App() {
         text: selectedText,
         draftText: '',
       });
-      setDraftText('');
     },
     onClearSelection: () => {
       // Keep activeInput if user is typing
     },
   });
 
-  const handleSubmitDiscussion = () => {
-    if (!activeInput || !draftText.trim()) return;
+  const handleSubmitDiscussion = (submittedText: string) => {
+    if (!activeInput || !submittedText.trim()) return;
 
     const userMessage: InlineThreadMessage = {
       id: `msg-user-${Date.now()}`,
-      content: draftText.trim(),
+      content: submittedText.trim(),
       authorRole: 'user',
       timestamp: Date.now(),
     };
 
     const aiFollowUp: InlineThreadMessage = {
       id: `msg-ai-${Date.now() + 1}`,
-      content: `Clarification for "${activeInput.text}": This behavior is deterministically enforced to preserve system invariants and prevent undefined states across asynchronous execution boundaries.`,
+      content: `Clarification for "${activeInput.text}": Under asynchronous execution, this invariant ensures linearizability by requiring a deterministic consensus quorum before acknowledging state transitions.`,
       authorRole: 'assistant',
       timestamp: Date.now() + 1,
     };
@@ -157,7 +220,6 @@ export function App() {
     }
 
     setActiveInput(null);
-    setDraftText('');
   };
 
   const renderHighlightMark = (tid: string, children: React.ReactNode, isExpanded: boolean) => (
@@ -190,37 +252,11 @@ export function App() {
   );
 
   const renderInputContent = (input: ActiveInlineInput) => (
-    <div
-      className="input-box"
-      data-testid="inline-input-box"
-      onClick={(e) => e.stopPropagation()}
-      onMouseUp={(e) => e.stopPropagation()}
-    >
-      <div style={{ fontSize: '12px', color: '#38bdf8', marginBottom: '6px', fontWeight: 600 }}>
-        In-Situ Question: &ldquo;{input.text}&rdquo;
-      </div>
-      <textarea
-        rows={2}
-        value={draftText}
-        autoFocus
-        placeholder="Ask a clarifying question at this exact sentence..."
-        onChange={(e) => setDraftText(e.target.value)}
-      />
-      <div className="button-group">
-        <button
-          className="btn btn-secondary"
-          onClick={() => setActiveInput(null)}
-        >
-          Cancel
-        </button>
-        <button
-          className="btn btn-primary"
-          onClick={handleSubmitDiscussion}
-        >
-          Post Inline Doubt
-        </button>
-      </div>
-    </div>
+    <InlineInputBox
+      input={input}
+      onSubmit={handleSubmitDiscussion}
+      onCancel={() => setActiveInput(null)}
+    />
   );
 
   const renderThreadContent = (thread: InlineSubThread, depth: number): React.ReactNode => (
