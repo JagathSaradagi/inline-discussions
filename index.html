@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zefina Inline Discussion Engine Demo</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #0f172a;
+        color: #f8fafc;
+      }
+      .container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 24px;
+        background: #1e293b;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      }
+      .header {
+        border-bottom: 1px solid #334155;
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: #0284c7;
+        color: white;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .input-box {
+        margin-top: 16px;
+        padding: 12px;
+        background: #0f172a;
+        border: 1px solid #38bdf8;
+        border-radius: 8px;
+      }
+      .input-box textarea {
+        width: 100%;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 14px;
+        resize: vertical;
+        outline: none;
+        box-sizing: border-box;
+      }
+      .button-group {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+      .btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+      }
+      .btn-primary {
+        background: #0284c7;
+        color: white;
+      }
+      .btn-secondary {
+        background: #475569;
+        color: white;
+      }
+      mark {
+        background-color: rgba(56, 189, 248, 0.25);
+        color: #38bdf8;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-weight: 600;
+        border-bottom: 2px solid #38bdf8;
+        cursor: pointer;
+        transition: background-color 0.15s;
+      }
+      mark:hover {
+        background-color: rgba(56, 189, 248, 0.35);
+      }
+      mark[data-tid="active"] {
+        background-color: #0284c7 !important;
+        color: #ffffff !important;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 700;
+        box-shadow: 0 0 12px rgba(2, 132, 199, 0.6);
+        border-bottom: none !important;
+      }
+      p {
+        margin: 0 0 14px 0;
+        line-height: 1.8;
+      }
+      [data-is-thread="true"] {
+        animation: fadeIn 0.25s ease-in-out;
+      }
+      .in-situ-thread-card {
+        margin: 12px 0 16px 8px;
+        padding: 14px 18px;
+        background: #0b1322;
+        border: 1px solid #1e293b;
+        border-left: 4px solid #38bdf8;
+        border-radius: 0 10px 10px 0;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+      }
+      .in-situ-thread-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      }
+      .in-situ-thread-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .in-situ-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.12);
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .in-situ-quote-preview {
+        font-size: 12px;
+        color: #94a3b8;
+        font-style: italic;
+        max-width: 320px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .in-situ-collapse-btn {
+        background: rgba(51, 65, 85, 0.3);
+        border: 1px solid #334155;
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .in-situ-collapse-btn:hover {
+        background: #1e293b;
+        color: #f1f5f9;
+        border-color: #64748b;
+      }
+      .in-situ-messages-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .in-situ-bubble {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13.5px;
+      }
+      .in-situ-bubble-user {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid #334155;
+      }
+      .in-situ-bubble-ai {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+      }
+      .in-situ-bubble-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+      .in-situ-author {
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .author-user {
+        color: #94a3b8;
+      }
+      .author-ai {
+        color: #38bdf8;
+      }
+      .in-situ-bubble-content {
+        color: #f1f5f9;
+        line-height: 1.55;
+        font-size: 13.5px;
+        word-break: break-word;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+    <script type="module" crossorigin src="/inline-discussions/assets/index-Dyy_yUkC.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
