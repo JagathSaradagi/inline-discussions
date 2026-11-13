@@ -122,7 +122,7 @@ export function App() {
 
     const aiFollowUp: InlineThreadMessage = {
       id: `msg-ai-${Date.now() + 1}`,
-      content: `In-Situ Clarification regarding "${activeInput.text}": This behavior is deterministically enforced to preserve system invariants and prevent undefined states across asynchronous execution boundaries.`,
+      content: `Clarification for "${activeInput.text}": This behavior is deterministically enforced to preserve system invariants and prevent undefined states across asynchronous execution boundaries.`,
       authorRole: 'assistant',
       timestamp: Date.now() + 1,
     };
@@ -213,6 +213,79 @@ export function App() {
             activeInput={activeInput}
             expandedThreadIds={expandedThreads}
             onToggleThread={toggleThread}
+            renderHighlightMark={(tid, children, isExpanded) => (
+              <mark
+                data-tid={tid}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
+                onClick={() => toggleThread(tid)}
+                style={{
+                  cursor: 'pointer',
+                  borderBottom: isExpanded ? '2px solid #38bdf8' : '2px dashed #38bdf8',
+                }}
+              >
+                {children}
+                <span
+                  style={{
+                    marginLeft: '4px',
+                    fontSize: '11px',
+                    opacity: 0.9,
+                    verticalAlign: 'baseline',
+                  }}
+                >
+                  {isExpanded ? '▴' : '💬'}
+                </span>
+              </mark>
+            )}
+            renderThread={(thread) => (
+              <div className="in-situ-thread-card" data-testid="in-situ-thread-card">
+                <div className="in-situ-thread-header">
+                  <div className="in-situ-thread-title">
+                    <span className="in-situ-badge">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      Contextual Clarification
+                    </span>
+                    {thread.highlightedText && (
+                      <span className="in-situ-quote-preview">
+                        &ldquo;{thread.highlightedText}&rdquo;
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="in-situ-collapse-btn"
+                    onClick={() => toggleThread(thread.id)}
+                    title="Collapse clarification"
+                  >
+                    ▲ Collapse
+                  </button>
+                </div>
+
+                <div className="in-situ-messages-list">
+                  {thread.messages.map((m) => {
+                    const isUser = m.authorRole === 'user' || m.sender === 'user';
+                    return (
+                      <div
+                        key={m.id}
+                        className={`in-situ-bubble ${isUser ? 'in-situ-bubble-user' : 'in-situ-bubble-ai'}`}
+                      >
+                        <div className="in-situ-bubble-header">
+                          <span className={`in-situ-author ${isUser ? 'author-user' : 'author-ai'}`}>
+                            {isUser ? '👤 Your Question' : '✨ AI Clarification'}
+                          </span>
+                        </div>
+                        <div className="in-situ-bubble-content">
+                          {m.content}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             renderInput={(input) => (
               <div className="input-box" data-testid="inline-input-box">
                 <div style={{ fontSize: '12px', color: '#38bdf8', marginBottom: '6px', fontWeight: 600 }}>

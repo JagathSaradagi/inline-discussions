@@ -127,37 +127,54 @@ export function InlineDiscussionViewer({
               return <div data-is-thread="true">{renderThread(thread, depth)}</div>;
             }
 
-            // Default unstyled thread container
+            // Default clean thread container fallback
             return (
               <div
                 data-is-thread="true"
-                className="my-4 pl-4 border-l-2 border-blue-500 bg-gray-50 dark:bg-gray-800/40 rounded-r p-3"
+                style={{
+                  margin: '12px 0',
+                  padding: '12px 16px',
+                  borderLeft: '3px solid #38bdf8',
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  borderRadius: '0 8px 8px 0',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+                }}
               >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                    Discussion (Depth {depth + 1})
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Contextual Clarification
                   </span>
                   <button
                     type="button"
                     onClick={() => onToggleThread?.(tid)}
-                    className="text-xs text-gray-500 hover:text-gray-700"
+                    style={{ fontSize: '11px', color: '#94a3b8', background: 'transparent', border: '1px solid #334155', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
                   >
-                    Hide
+                    ▲ Collapse
                   </button>
                 </div>
-                {thread.messages.map((m) => (
-                  <InlineDiscussionViewer
-                    key={m.id}
-                    message={m}
-                    activeInput={activeInput}
-                    expandedThreadIds={expandedThreadIds}
-                    onToggleThread={onToggleThread}
-                    renderThread={renderThread}
-                    renderInput={renderInput}
-                    renderHighlightMark={renderHighlightMark}
-                    depth={depth + 1}
-                  />
-                ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {thread.messages.map((m) => {
+                    const isUser = m.authorRole === 'user' || m.sender === 'user';
+                    return (
+                      <div
+                        key={m.id}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          background: isUser ? '#1e293b' : '#0f172a',
+                          border: `1px solid ${isUser ? '#334155' : 'rgba(56, 189, 248, 0.2)'}`,
+                        }}
+                      >
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: isUser ? '#cbd5e1' : '#38bdf8', marginBottom: '4px' }}>
+                          {isUser ? '👤 Question' : '✨ AI Clarification'}
+                        </div>
+                        <div style={{ fontSize: '13.5px', color: '#f1f5f9', lineHeight: '1.5' }}>
+                          {m.content}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           },
