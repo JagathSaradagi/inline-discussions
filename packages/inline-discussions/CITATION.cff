@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software or its in-situ AST mapping architecture, please cite it using the metadata below."
+authors:
+  - family-names: "Saradagi"
+    given-names: "Jagath"
+    email: "jagathsaradagi@gmail.com"
+title: "In-Situ Recursive Discussion Engine for AI Markdown Responses"
+version: 0.1.0
+date-released: 2026-11-13
+url: "https://github.com/JagathSaradagi/inline-discussions"
+repository-code: "https://github.com/JagathSaradagi/inline-discussions"
+abstract: >-
+  A reusable React/TypeScript engine introducing in-situ recursive discussions
+  anchored directly inside AI-generated Markdown responses. Solves DOM-to-source
+  coordinate drift across Markdown formatting delimiters using O(1) AST character
+  mapping and single-pass sibling-block paragraph splitting while keeping the
+  original AI Markdown response completely immutable.
+keywords:
+  - "human-computer interaction"
+  - "ai interfaces"
+  - "markdown ast"
+  - "inline discussions"
+  - "react"
+  - "typescript"
+  - "unified"
+  - "remark"
+license: "AGPL-3.0-or-later"

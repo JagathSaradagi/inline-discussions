@@ -1,0 +1,16 @@
+{
+  "name": "inline-discussions-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=@zefina/inline-discussions && npm run build --workspace=standalone-demo",
+    "test": "npm run test --workspace=@zefina/inline-discussions"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0"
+  }
+}

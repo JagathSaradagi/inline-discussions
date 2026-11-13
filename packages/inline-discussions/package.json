@@ -1,0 +1,40 @@
+{
+  "name": "@zefina/inline-discussions",
+  "version": "0.1.0",
+  "description": "Recursive discussions, anchored directly inside AI-generated Markdown responses",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "markdown",
+    "ast",
+    "inline-comments",
+    "threads",
+    "ai",
+    "react"
+  ],
+  "author": "JagathSaradagi",
+  "license": "AGPL-3.0-or-later",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.4",
+    "unist-util-visit": "^5.0.0"
+  }
+}
