@@ -69,15 +69,24 @@ export function useInlineSelection({
         return;
       }
 
-      // Helper to query data-ast-span-id
-      const getSpanIdFromNode = (targetContainer: Node | null): { spanId: string; offset: number } => {
+      // Helper to query data-ast-span-id, correctly inspecting child element spans if container is an element node
+      const getSpanIdFromNode = (targetContainer: Node | null, isEnd: boolean): { spanId: string; offset: number } => {
         if (!targetContainer) return { spanId: 'span-0', offset: 0 };
-        let el: any = targetContainer.nodeType === Node.TEXT_NODE ? targetContainer.parentElement : targetContainer;
+        let target: Node | null = targetContainer;
+
+        if (target.nodeType === Node.ELEMENT_NODE && target.childNodes.length > 0) {
+          const childIndex = isEnd ? Math.max(0, range.endOffset - 1) : Math.min(range.startOffset, target.childNodes.length - 1);
+          if (target.childNodes[childIndex]) {
+            target = target.childNodes[childIndex];
+          }
+        }
+
+        let el: any = target.nodeType === Node.TEXT_NODE ? target.parentElement : target;
         while (el && el !== node) {
           if (el.hasAttribute && el.hasAttribute('data-ast-span-id')) {
             return {
               spanId: el.getAttribute('data-ast-span-id') || 'span-0',
-              offset: range.startOffset || 0,
+              offset: isEnd ? range.endOffset : range.startOffset,
             };
           }
           el = el.parentElement;
@@ -85,8 +94,8 @@ export function useInlineSelection({
         return { spanId: 'span-0', offset: 0 };
       };
 
-      const startSpanInfo = getSpanIdFromNode(range.startContainer ?? null);
-      const endSpanInfo = getSpanIdFromNode(range.endContainer ?? null);
+      const startSpanInfo = getSpanIdFromNode(range.startContainer ?? null, false);
+      const endSpanInfo = getSpanIdFromNode(range.endContainer ?? null, true);
 
       // Resolve content
       const rawContent = getContentForMessage ? getContentForMessage(msgId) : '';
@@ -97,34 +106,50 @@ export function useInlineSelection({
 
       const astMap = getCachedAstSourceMap(msgId, rawContent);
 
+      let resolved: ResolvedSourceRange = { rawStart: -1, rawEnd: -1, selectedText: '', found: false };
+
       if (
         startSpanInfo.spanId &&
         endSpanInfo.spanId &&
         astMap.spanMap.has(startSpanInfo.spanId) &&
         astMap.spanMap.has(endSpanInfo.spanId)
       ) {
-        const resolved: ResolvedSourceRange = resolveDomSelectionToSourceRange(astMap, {
+        resolved = resolveDomSelectionToSourceRange(astMap, {
           startSpanId: startSpanInfo.spanId,
           startOffset: range.startOffset,
           endSpanId: endSpanInfo.spanId,
           endOffset: range.endOffset,
         });
+      }
 
-        if (resolved.found && resolved.rawEnd > 0) {
-          const payload: SelectionPayload = {
-            msgId,
-            selectedText: text,
-            anchorOffset: resolved.rawEnd,
-            rawStart: resolved.rawStart,
-            rawEnd: resolved.rawEnd,
-            boundingRect: rect,
-            domSelection: selection,
-          };
+      // Exact substring verification: ensures resolved offsets never point to wrong paragraph
+      let rawStart = resolved.rawStart;
+      let rawEnd = resolved.rawEnd;
 
-          setCurrentSelection(payload);
-          onSelectRange?.(payload);
-          return;
+      const sliceMatches = resolved.found && rawContent.slice(rawStart, rawEnd).trim() === text;
+      if (!sliceMatches) {
+        const matchIdx = rawContent.indexOf(text);
+        if (matchIdx !== -1) {
+          rawStart = matchIdx;
+          rawEnd = matchIdx + text.length;
+          resolved = { rawStart, rawEnd, selectedText: text, found: true };
         }
+      }
+
+      if (resolved.found && rawEnd > 0) {
+        const payload: SelectionPayload = {
+          msgId,
+          selectedText: text,
+          anchorOffset: rawEnd,
+          rawStart: rawStart,
+          rawEnd: rawEnd,
+          boundingRect: rect,
+          domSelection: selection,
+        };
+
+        setCurrentSelection(payload);
+        onSelectRange?.(payload);
+        return;
       }
 
       clearSelection();

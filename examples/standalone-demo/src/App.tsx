@@ -90,8 +90,11 @@ export function App() {
   const { handleMouseUp } = useInlineSelection({
     containerRef,
     getContentForMessage: (msgId) => {
-      const found = activeMessages.find((m) => m.id === msgId);
-      return found?.content;
+      for (const list of Object.values(scenarioMessages)) {
+        const found = list.find((m) => m.id === msgId);
+        if (found) return found.content;
+      }
+      return undefined;
     },
     onSelectRange: ({ msgId, anchorOffset, selectedText }) => {
       setActiveInput({
@@ -101,6 +104,9 @@ export function App() {
         draftText: '',
       });
       setDraftText('');
+    },
+    onClearSelection: () => {
+      // Keep activeInput if user is typing
     },
   });
 
