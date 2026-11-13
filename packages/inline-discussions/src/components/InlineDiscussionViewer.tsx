@@ -169,7 +169,16 @@ export function InlineDiscussionViewer({
                           {isUser ? '👤 Question' : '✨ AI Clarification'}
                         </div>
                         <div style={{ fontSize: '13.5px', color: '#f1f5f9', lineHeight: '1.5' }}>
-                          {m.content}
+                          <InlineDiscussionViewer
+                            message={m}
+                            activeInput={activeInput}
+                            expandedThreadIds={expandedThreadIds}
+                            onToggleThread={onToggleThread}
+                            renderThread={renderThread}
+                            renderInput={renderInput}
+                            renderHighlightMark={renderHighlightMark}
+                            depth={depth + 1}
+                          />
                         </div>
                       </div>
                     );

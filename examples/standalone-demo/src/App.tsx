@@ -160,6 +160,151 @@ export function App() {
     setDraftText('');
   };
 
+  const renderHighlightMark = (tid: string, children: React.ReactNode, isExpanded: boolean) => (
+    <mark
+      data-tid={tid}
+      role="button"
+      tabIndex={0}
+      aria-expanded={isExpanded}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleThread(tid);
+      }}
+      style={{
+        cursor: 'pointer',
+        borderBottom: isExpanded ? '2px solid #38bdf8' : '2px dashed #38bdf8',
+      }}
+    >
+      {children}
+      <span
+        style={{
+          marginLeft: '4px',
+          fontSize: '11px',
+          opacity: 0.9,
+          verticalAlign: 'baseline',
+        }}
+      >
+        {isExpanded ? '▴' : '💬'}
+      </span>
+    </mark>
+  );
+
+  const renderInputContent = (input: ActiveInlineInput) => (
+    <div
+      className="input-box"
+      data-testid="inline-input-box"
+      onClick={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+    >
+      <div style={{ fontSize: '12px', color: '#38bdf8', marginBottom: '6px', fontWeight: 600 }}>
+        In-Situ Question: &ldquo;{input.text}&rdquo;
+      </div>
+      <textarea
+        rows={2}
+        value={draftText}
+        autoFocus
+        placeholder="Ask a clarifying question at this exact sentence..."
+        onChange={(e) => setDraftText(e.target.value)}
+      />
+      <div className="button-group">
+        <button
+          className="btn btn-secondary"
+          onClick={() => setActiveInput(null)}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn btn-primary"
+          onClick={handleSubmitDiscussion}
+        >
+          Post Inline Doubt
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderThreadContent = (thread: InlineSubThread, depth: number): React.ReactNode => (
+    <div
+      className="in-situ-thread-card"
+      data-testid="in-situ-thread-card"
+      style={
+        depth > 0
+          ? {
+              marginLeft: `${Math.min(depth * 10, 28)}px`,
+              borderLeftColor: depth % 2 === 1 ? '#a855f7' : '#38bdf8',
+            }
+          : undefined
+      }
+    >
+      <div className="in-situ-thread-header">
+        <div className="in-situ-thread-title">
+          <span
+            className="in-situ-badge"
+            style={
+              depth > 0
+                ? {
+                    color: depth % 2 === 1 ? '#c084fc' : '#38bdf8',
+                    background: depth % 2 === 1 ? 'rgba(192, 132, 252, 0.12)' : 'rgba(56, 189, 248, 0.12)',
+                  }
+                : undefined
+            }
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            {depth > 0 ? `Nested Reply (Depth ${depth + 1})` : 'Contextual Clarification'}
+          </span>
+          {thread.highlightedText && (
+            <span className="in-situ-quote-preview">
+              &ldquo;{thread.highlightedText}&rdquo;
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          className="in-situ-collapse-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleThread(thread.id);
+          }}
+          title="Collapse clarification"
+        >
+          ▲ Collapse
+        </button>
+      </div>
+
+      <div className="in-situ-messages-list">
+        {thread.messages.map((m) => {
+          const isUser = m.authorRole === 'user' || m.sender === 'user';
+          return (
+            <div
+              key={m.id}
+              className={`in-situ-bubble ${isUser ? 'in-situ-bubble-user' : 'in-situ-bubble-ai'}`}
+            >
+              <div className="in-situ-bubble-header">
+                <span className={`in-situ-author ${isUser ? 'author-user' : 'author-ai'}`}>
+                  {isUser ? '👤 Your Question' : `✨ AI Clarification${depth > 0 ? ` (Depth ${depth + 1})` : ''}`}
+                </span>
+              </div>
+              <div className="in-situ-bubble-content">
+                <InlineDiscussionViewer
+                  message={m}
+                  activeInput={activeInput}
+                  expandedThreadIds={expandedThreads}
+                  onToggleThread={toggleThread}
+                  renderHighlightMark={renderHighlightMark}
+                  renderThread={renderThreadContent}
+                  renderInput={renderInputContent}
+                  depth={depth + 1}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   const tree = reconstructTree(activeMessages);
 
   return (
@@ -213,107 +358,9 @@ export function App() {
             activeInput={activeInput}
             expandedThreadIds={expandedThreads}
             onToggleThread={toggleThread}
-            renderHighlightMark={(tid, children, isExpanded) => (
-              <mark
-                data-tid={tid}
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                onClick={() => toggleThread(tid)}
-                style={{
-                  cursor: 'pointer',
-                  borderBottom: isExpanded ? '2px solid #38bdf8' : '2px dashed #38bdf8',
-                }}
-              >
-                {children}
-                <span
-                  style={{
-                    marginLeft: '4px',
-                    fontSize: '11px',
-                    opacity: 0.9,
-                    verticalAlign: 'baseline',
-                  }}
-                >
-                  {isExpanded ? '▴' : '💬'}
-                </span>
-              </mark>
-            )}
-            renderThread={(thread) => (
-              <div className="in-situ-thread-card" data-testid="in-situ-thread-card">
-                <div className="in-situ-thread-header">
-                  <div className="in-situ-thread-title">
-                    <span className="in-situ-badge">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                      </svg>
-                      Contextual Clarification
-                    </span>
-                    {thread.highlightedText && (
-                      <span className="in-situ-quote-preview">
-                        &ldquo;{thread.highlightedText}&rdquo;
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="in-situ-collapse-btn"
-                    onClick={() => toggleThread(thread.id)}
-                    title="Collapse clarification"
-                  >
-                    ▲ Collapse
-                  </button>
-                </div>
-
-                <div className="in-situ-messages-list">
-                  {thread.messages.map((m) => {
-                    const isUser = m.authorRole === 'user' || m.sender === 'user';
-                    return (
-                      <div
-                        key={m.id}
-                        className={`in-situ-bubble ${isUser ? 'in-situ-bubble-user' : 'in-situ-bubble-ai'}`}
-                      >
-                        <div className="in-situ-bubble-header">
-                          <span className={`in-situ-author ${isUser ? 'author-user' : 'author-ai'}`}>
-                            {isUser ? '👤 Your Question' : '✨ AI Clarification'}
-                          </span>
-                        </div>
-                        <div className="in-situ-bubble-content">
-                          {m.content}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            renderInput={(input) => (
-              <div className="input-box" data-testid="inline-input-box">
-                <div style={{ fontSize: '12px', color: '#38bdf8', marginBottom: '6px', fontWeight: 600 }}>
-                  In-Situ Question: &ldquo;{input.text}&rdquo;
-                </div>
-                <textarea
-                  rows={2}
-                  value={draftText}
-                  autoFocus
-                  placeholder="Ask a clarifying question at this exact sentence..."
-                  onChange={(e) => setDraftText(e.target.value)}
-                />
-                <div className="button-group">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => setActiveInput(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleSubmitDiscussion}
-                  >
-                    Post Inline Doubt
-                  </button>
-                </div>
-              </div>
-            )}
+            renderHighlightMark={renderHighlightMark}
+            renderThread={renderThreadContent}
+            renderInput={renderInputContent}
           />
         ))}
       </div>
