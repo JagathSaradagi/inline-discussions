@@ -22,16 +22,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install and Build Demo
+      - name: Build Core Package
+        run: |
+          cd packages/inline-discussions
+          npm install
+          npx tsc
+
+      - name: Build Standalone Playground
         run: |
           cd examples/standalone-demo
           npm install
-          npx vite build --config vite.config.ts .
+          npx vite build --base=/inline-discussions/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

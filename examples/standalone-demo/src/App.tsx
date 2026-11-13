@@ -7,7 +7,7 @@ import {
   findAndAddMessageFlat,
   InlineThreadMessage,
   ActiveInlineInput,
-} from '../../../packages/inline-discussions/src';
+} from '@zefina/inline-discussions';
 
 interface Scenario {
   id: string;
